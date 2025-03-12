@@ -1,5 +1,5 @@
 # Токен для подключени бота к Telegram
-API_TOKEN = '8068049494:AAFPFgNJWs4ZSvbXsIWlYMVRM1cn2G5q6Uo'
+API_TOKEN = 'CHANGEME'
 LOG_FILE = 'wedding_bot.log'
 ADMINS = {}
 
@@ -12,6 +12,4 @@ db = {
     }
 }
 """
-DB = {
-    '+79518165665': {'name': 'Yin'},
-}
+DB = {}
