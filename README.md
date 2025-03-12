@@ -15,8 +15,10 @@ pip install -r requirements.txt
 ```
 
 # settings
-`cp settings.dev.py settings.py`
-Now all settings are located in the file `settings.py`
+```
+cp settings.dev.py settings.py
+```
+Now settings are located in the file `settings.py`
 
 # run
 ```shell
