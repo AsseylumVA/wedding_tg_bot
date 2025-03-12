@@ -1,2 +1,2 @@
-# wending_tg_bot
-Wending tg bot
+# wedding_tg_bot
+Wedding tg bot
