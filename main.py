@@ -6,14 +6,15 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import State, StatesGroup
-from aiogram.filters import CommandStart, Command, StateFilter
+from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 import settings
 
 bot = Bot(
-    token=settings.API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    token=settings.API_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
 )
 router = Router()
 
@@ -25,20 +26,6 @@ logging.basicConfig(
     format=log_format,
     handlers=[TimedRotatingFileHandler(settings.LOG_FILE, when='d')],
 )
-
-
-# @start_router.message(CommandStart())
-# async def cmd_start(message: Message):
-#     await message.answer('Запуск сообщения по команде /start используя фильтр CommandStart()')
-
-# @start_router.message(Command('start_2'))
-# async def cmd_start_2(message: Message):
-#     await message.answer('Запуск сообщения по команде /start_2 используя фильтр Command()')
-
-# @start_router.message(F.text == '/start_3')
-# async def cmd_start_3(message: Message):
-#     await message.answer('Запуск сообщения по команде /start_3 используя магический фильтр F.text!')
-
 
 # Словарь вопросов
 questions = {
@@ -64,8 +51,8 @@ questions = {
         'answers': [
             {'text': '🍸Крепкий', 'value': 'hard'},
             {'text': '🍷Вино', 'value': 'wine'},
-            {'text': '🍺Тёмное пиво', 'value': 'light_beer'},
-            {'text': '🍻Светлое пиво', 'value': 'dark_beer'},
+            {'text': '🍺Тёмное пиво', 'value': 'lightbeer'},
+            {'text': '🍻Светлое пиво', 'value': 'darkbeer'},
         ],
         'adjust': 2,
     },
@@ -81,7 +68,9 @@ class UserState(StatesGroup):
 
 def start_menu():
     kb_list = [[types.KeyboardButton(text='/start')]]
-    keyboard = types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=kb_list, resize_keyboard=True
+    )
     return keyboard
 
 
@@ -102,7 +91,10 @@ def new_user_menu():
 
 def make_menu():
     kb_list = [
-        [types.KeyboardButton(text='Расписание'), types.KeyboardButton(text='Место проведения')],
+        [
+            types.KeyboardButton(text='Расписание'),
+            types.KeyboardButton(text='Место проведения'),
+        ],
         [types.KeyboardButton(text='Информация')],
     ]
     return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
@@ -132,7 +124,8 @@ async def start_new_user(message: Message, state: FSMContext):
     """
 
     await message.answer(
-        'Мы еще не знакомы. Пожалуйста, представься', reply_markup=new_user_menu()
+        'Мы еще не знакомы. Пожалуйста, представься',
+        reply_markup=new_user_menu(),
     )
     return
 
@@ -169,10 +162,13 @@ async def register(message: types.Message, state: FSMContext):
         reply_markup=create_qst_inline_kb(question_id, question),
     )
 
-@router.callback_query(StateFilter(UserState.REGISTERED), F.data.startswith('qst_'))
+
+@router.callback_query(
+    StateFilter(UserState.REGISTERED), F.data.startswith('qst_')
+)
 async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    
+
     # Разбираем callback_data
     _, question_id, answer_value = callback.data.split('_')
     question_id = int(question_id)
@@ -185,6 +181,13 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
 
     await process_answer(state, answer_value, question_id)
 
+    if question_id == 1 and answer_value == 'False':
+        await callback.message.answer(
+            'Очень жаль, что ты не сможешь прийти. 😢'
+        )
+        await state.set_state(UserState.FRAUD)
+        return
+
     # Отправляем следующий вопрос (если есть)
     next_question_id = question_id + 1
     if next_question_id in questions:
@@ -194,8 +197,10 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
             reply_markup=create_qst_inline_kb(next_question_id, next_question),
         )
     else:
-        state.set_state(UserState.LAST_STEP)
-        await callback.message.answer('Спасибо за ответы! 🎉', reply_markup=make_menu())
+        await state.set_state(UserState.LAST_STEP)
+        await callback.message.answer(
+            'Спасибо за ответы! 🎉', reply_markup=make_menu()
+        )
 
 
 async def process_answer(
@@ -205,3 +210,20 @@ async def process_answer(
 ):
     # Сохраняем ответ в состоянии
     await state.update_data({question_id: answer_value})
+
+
+@router.message(F.text)
+async def unknown_command(message: types.Message, state: FSMContext):
+    logging.error(f'unknown user state: {state}')
+
+    if state == UserState.FRAUD:
+        await message.answer('Очень жаль, что ты не сможешь прийти. 😢')
+        return
+
+    if state is not None:
+        await message.answer(
+            'Доступны только команды из меню', reply_markup=make_menu()
+        )
+        return
+
+    await message.answer('Мы не знакомы', reply_markup=start_menu())
