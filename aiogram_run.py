@@ -1,6 +1,6 @@
 import asyncio
-from create_bot import bot, dp
-from main import router
+from create_bot import dp
+from main import bot, router
 
 
 async def main():
