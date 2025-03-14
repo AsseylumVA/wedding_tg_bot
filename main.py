@@ -63,7 +63,7 @@ class UserState(StatesGroup):
     NEW_USER = State()
     REGISTERED = State()
     FRAUD = State()
-    LAST_STEP = State()
+    WAITING_FOR_ANSWERS = State()
 
 
 def start_menu():
@@ -154,7 +154,7 @@ async def register(message: types.Message, state: FSMContext):
         return
 
     await state.update_data(user_data)
-    await state.set_state(UserState.REGISTERED)
+    await state.set_state(UserState.WAITING_FOR_ANSWERS)
     question_id = 1
     question = questions[question_id]
     await message.answer(
@@ -164,7 +164,7 @@ async def register(message: types.Message, state: FSMContext):
 
 
 @router.callback_query(
-    StateFilter(UserState.REGISTERED), F.data.startswith('qst_')
+    StateFilter(UserState.WAITING_FOR_ANSWERS), F.data.startswith('qst_')
 )
 async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -197,7 +197,7 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
             reply_markup=create_qst_inline_kb(next_question_id, next_question),
         )
     else:
-        await state.set_state(UserState.LAST_STEP)
+        await state.set_state(UserState.REGISTERED)
         await callback.message.answer(
             'Спасибо за ответы! 🎉', reply_markup=make_menu()
         )
@@ -221,8 +221,12 @@ async def unknown_command(message: types.Message, state: FSMContext):
         return
 
     if state is not None:
+        reply_markup = None
+        if state == UserState.REGISTERED:
+            reply_markup = make_menu()
+
         await message.answer(
-            'Доступны только команды из меню', reply_markup=make_menu()
+            'Доступны только команды из меню', reply_markup=reply_markup
         )
         return
 
