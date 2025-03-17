@@ -1,9 +1,8 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-from aiogram import Bot, Router, F, types
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
+from aiogram import Router, F, types
+
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import State, StatesGroup
 from aiogram.filters import CommandStart, StateFilter
@@ -12,10 +11,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 import settings
 
-bot = Bot(
-    token=settings.API_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-)
 router = Router()
 
 log_format = '[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s'
