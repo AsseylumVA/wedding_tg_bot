@@ -99,7 +99,7 @@ def create_qst_inline_kb(
     question_id: int, question: dict
 ) -> types.InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    # Добавляем кнопки вопросов
+    # add answer buttons
     for answer in question['answers']:
         builder.row(
             types.InlineKeyboardButton(
@@ -107,7 +107,7 @@ def create_qst_inline_kb(
                 callback_data=f'qst_{question_id}_{answer["value"]}',
             )
         )
-    # Настраиваем размер клавиатуры
+    # set keyboard  size
     builder.adjust(question['adjust'])
     return builder.as_markup()
 
