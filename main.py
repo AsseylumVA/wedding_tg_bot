@@ -2,14 +2,14 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 
 from aiogram import Router, F, types
-
-from aiogram.fsm.context import FSMContext
-from aiogram.filters.state import State, StatesGroup
 from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters.state import State, StatesGroup
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 import settings
+from settings import QUESTIONS
 
 router = Router()
 
@@ -21,37 +21,6 @@ logging.basicConfig(
     format=log_format,
     handlers=[TimedRotatingFileHandler(settings.LOG_FILE, when='d')],
 )
-
-# Словарь вопросов
-questions = {
-    1: {
-        'id': 1,
-        'text': 'Планируешь ли ты посетить нашу свадьбу?',
-        'answers': [
-            {'text': '🎉Да', 'value': True},
-            {'text': '😕Нет', 'value': False},
-        ],
-        'adjust': 2,
-    },
-    2: {
-        'text': 'Нужен ли тебе трансфер?',
-        'answers': [
-            {'text': '🚌Да', 'value': True},
-            {'text': '🚕Нет, приеду сам(а)', 'value': False},
-        ],
-        'adjust': 2,
-    },
-    3: {
-        'text': 'Какой алкоголь предпочитаешь?',
-        'answers': [
-            {'text': '🍸Крепкий', 'value': 'hard'},
-            {'text': '🍷Вино', 'value': 'wine'},
-            {'text': '🍺Тёмное пиво', 'value': 'lightbeer'},
-            {'text': '🍻Светлое пиво', 'value': 'darkbeer'},
-        ],
-        'adjust': 2,
-    },
-}
 
 
 class UserState(StatesGroup):
@@ -87,16 +56,16 @@ def new_user_menu():
 def make_menu():
     kb_list = [
         [
-            types.KeyboardButton(text='Расписание'),
-            types.KeyboardButton(text='Место проведения'),
+            types.KeyboardButton(text='🎪Место проведения'),
+            types.KeyboardButton(text='🕒Расписание'),
         ],
-        [types.KeyboardButton(text='Информация')],
+        [types.KeyboardButton(text='🌸НАЖМИ')],
     ]
     return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
 
 
 def create_qst_inline_kb(
-    question_id: int, question: dict
+        question_id: int, question: dict
 ) -> types.InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     # add answer buttons
@@ -110,6 +79,15 @@ def create_qst_inline_kb(
     # set keyboard  size
     builder.adjust(question['adjust'])
     return builder.as_markup()
+
+
+async def process_answer(
+        state: FSMContext,
+        answer_value: str,
+        question_id: int,
+):
+    # Сохраняем ответ в состоянии
+    await state.update_data({question_id: answer_value})
 
 
 @router.message(StateFilter(None), CommandStart())
@@ -151,7 +129,10 @@ async def register(message: types.Message, state: FSMContext):
     await state.update_data(user_data)
     await state.set_state(UserState.WAITING_FOR_ANSWERS)
     question_id = 1
-    question = questions[question_id]
+    question = QUESTIONS[question_id]
+    await message.answer(
+        text=f'Привет {user_data['name']}'
+    )
     await message.answer(
         text=question['text'],
         reply_markup=create_qst_inline_kb(question_id, question),
@@ -169,7 +150,7 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
     question_id = int(question_id)
 
     # Получаем вопрос из словаря
-    question = questions.get(question_id)
+    question = QUESTIONS.get(question_id)
     if not question:
         await callback.answer('Ошибка: вопрос не найден.')
         return
@@ -185,8 +166,8 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
 
     # Отправляем следующий вопрос (если есть)
     next_question_id = question_id + 1
-    if next_question_id in questions:
-        next_question = questions[next_question_id]
+    if next_question_id in QUESTIONS:
+        next_question = QUESTIONS[next_question_id]
         await callback.message.answer(
             text=next_question['text'],
             reply_markup=create_qst_inline_kb(next_question_id, next_question),
@@ -194,17 +175,44 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
     else:
         await state.set_state(UserState.REGISTERED)
         await callback.message.answer(
-            'Спасибо за ответы! 🎉', reply_markup=make_menu()
+            settings.END_POLL_MESSAGE, reply_markup=make_menu()
         )
 
 
-async def process_answer(
-    state: FSMContext,
-    answer_value: str,
-    question_id: int,
-):
-    # Сохраняем ответ в состоянии
-    await state.update_data({question_id: answer_value})
+@router.message(StateFilter(UserState.REGISTERED), F.text.contains('НАЖМИ'))
+async def info(message: types.Message, state: FSMContext):
+    await message.answer(
+        'Дорогой гость, '
+        'просим Вас не обременять себя выбором букета! '
+        'Ваше присутствие украсит наш день ярче любых цветов!')
+
+
+@router.message(StateFilter(UserState.REGISTERED),
+                F.text.contains('Расписание'))
+async def info(message: types.Message, state: FSMContext):
+    await message.answer(
+        '''
+🕒15:30 Фуршет🥂
+🕒16:00 Церемония бракосочетания🤵👰
+🕒17:00 - 23:00 Банкет🎂
+        ''')
+
+
+@router.message(StateFilter(UserState.REGISTERED),
+                F.text.contains('Место проведения'))
+async def info(message: types.Message, state: FSMContext):
+    latitude = 55.157992
+    longitude = 61.152166
+
+    await message.answer_location(
+        latitude=latitude,
+        longitude=longitude,
+    )
+
+    await message.answer(
+        'Свадьба пройдет на базе отдыха «Боярская станица». Ждем тебя! 🎉\n'
+        'Адрес: Челябинск, оз. Большой Кременкуль, 1. Банкетный зал «Великан»'
+    )
 
 
 @router.message(F.text)
