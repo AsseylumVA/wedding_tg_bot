@@ -1,8 +1,9 @@
 import logging
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
 
 import settings
 
@@ -14,7 +15,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-dp = Dispatcher(storage=MemoryStorage())
+storage = RedisStorage.from_url(settings.REDIS_DB)
+dp = Dispatcher(storage=storage)
 bot = Bot(
     token=settings.API_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML),

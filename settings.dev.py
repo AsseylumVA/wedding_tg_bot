@@ -13,3 +13,4 @@ db = {
 }
 """
 DB = {}
+REDIS_DB = 'redis://HOST:PORT/DB_NUM'
