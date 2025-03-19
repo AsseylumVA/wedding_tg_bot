@@ -86,10 +86,10 @@ def create_qst_inline_kb(
 def admin_menu() -> types.ReplyKeyboardMarkup:
     kb_list = [
         [
-            types.KeyboardButton(text='/poll_results'),
-            types.KeyboardButton(text='/who_come'),
-            types.KeyboardButton(text='/who_fraud'),
-            types.KeyboardButton(text='/others'),
+            types.KeyboardButton(text='Результаты опроса'),
+            types.KeyboardButton(text='Кто придет?'),
+            types.KeyboardButton(text='Кто не придет?'),
+            types.KeyboardButton(text='Остальные'),
         ],
     ]
     return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
@@ -305,7 +305,7 @@ def format_poll_results(user_data):
     return '; '.join(formatted_results)
 
 
-@router.message(Command('poll_results'))
+@router.message(F.text == 'Результаты опроса'), StateFilter(UserState.ADMIN))
 async def poll_results(message: types.Message):
     user_keys = await get_all_users()
     results = []
@@ -322,7 +322,7 @@ async def poll_results(message: types.Message):
         await message.answer('Нет данных о результатах опроса.')
 
 
-@router.message(Command('who_come'))
+@router.message(F.text == 'Кто придет?'), StateFilter(UserState.ADMIN))
 async def who_come(message: types.Message):
     coming_users = await get_users_by_answer('qst_1', 'True')
 
@@ -332,7 +332,7 @@ async def who_come(message: types.Message):
         await message.answer('Нет данных о тех, кто придет.')
 
 
-@router.message(Command('who_fraud'))
+@router.message(F.text == 'Кто не придет?', StateFilter(UserState.ADMIN))
 async def who_fraud(message: types.Message):
     fraud_users = await get_users_by_answer(1, 'False')
 
@@ -343,7 +343,7 @@ async def who_fraud(message: types.Message):
         await message.answer('Нет данных о тех, кто не придет.')
 
 
-@router.message(Command('others'))
+@router.message(F.text == 'Остальные', StateFilter(UserState.ADMIN))
 async def others(message: types.Message):
     others_users = await get_non_responding_users()
 
