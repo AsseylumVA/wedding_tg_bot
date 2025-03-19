@@ -115,9 +115,9 @@ async def save_answers_to_redis(user_data: dict):
 
 @router.message(StateFilter(None), CommandStart())
 async def start_new_user(message: Message, state: FSMContext):
-    '''
+    """
     This handler will be called when user sends `/start` or `/help` command
-    '''
+    """
     await message.answer(
         'Мы еще не знакомы. Пожалуйста, представься',
         reply_markup=new_user_menu(),
@@ -305,7 +305,7 @@ def format_poll_results(user_data):
     return '; '.join(formatted_results)
 
 
-@router.message(F.text == 'Результаты опроса'), StateFilter(UserState.ADMIN))
+@router.message(F.text == 'Результаты опроса', StateFilter(UserState.ADMIN))
 async def poll_results(message: types.Message):
     user_keys = await get_all_users()
     results = []
@@ -322,7 +322,7 @@ async def poll_results(message: types.Message):
         await message.answer('Нет данных о результатах опроса.')
 
 
-@router.message(F.text == 'Кто придет?'), StateFilter(UserState.ADMIN))
+@router.message(F.text == 'Кто придет?', StateFilter(UserState.ADMIN))
 async def who_come(message: types.Message):
     coming_users = await get_users_by_answer('qst_1', 'True')
 
