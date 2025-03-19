@@ -9,6 +9,7 @@ ADMINS = {}
 db = {
     '+79999999999': {
         'name': 'Петр',
+        'is_admin': False,
     }
 }
 """
