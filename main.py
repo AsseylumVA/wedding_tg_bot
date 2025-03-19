@@ -8,6 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+import messages
 import settings
 from settings import QUESTIONS
 
@@ -87,7 +88,7 @@ async def process_answer(
         question_id: int,
 ):
     # Сохраняем ответ в состоянии
-    await state.update_data({question_id: answer_value})
+    await state.update_data({str(question_id): answer_value})
 
 
 @router.message(StateFilter(None), CommandStart())
@@ -131,7 +132,8 @@ async def register(message: types.Message, state: FSMContext):
     question_id = 1
     question = QUESTIONS[question_id]
     await message.answer(
-        text=f'Привет {user_data['name']}'
+        text=f'Привет {user_data['name']}',
+        reply_markup=types.ReplyKeyboardRemove()
     )
     await message.answer(
         text=question['text'],
@@ -181,26 +183,18 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
 
 @router.message(StateFilter(UserState.REGISTERED), F.text.contains('НАЖМИ'))
 async def info(message: types.Message, state: FSMContext):
-    await message.answer(
-        'Дорогой гость, '
-        'просим Вас не обременять себя выбором букета! '
-        'Ваше присутствие украсит наш день ярче любых цветов!')
+    await message.answer(messages.FLOWERS_INFO_MESSAGE)
 
 
 @router.message(StateFilter(UserState.REGISTERED),
                 F.text.contains('Расписание'))
-async def info(message: types.Message, state: FSMContext):
-    await message.answer(
-        '''
-🕒15:30 Фуршет🥂
-🕒16:00 Церемония бракосочетания🤵👰
-🕒17:00 - 23:00 Банкет🎂
-        ''')
+async def schedule(message: types.Message, state: FSMContext):
+    await message.answer(messages.SСHEDULLE_MESSAGE)
 
 
 @router.message(StateFilter(UserState.REGISTERED),
                 F.text.contains('Место проведения'))
-async def info(message: types.Message, state: FSMContext):
+async def geo(message: types.Message, state: FSMContext):
     latitude = 55.157992
     longitude = 61.152166
 
@@ -209,10 +203,7 @@ async def info(message: types.Message, state: FSMContext):
         longitude=longitude,
     )
 
-    await message.answer(
-        'Свадьба пройдет на базе отдыха «Боярская станица». Ждем тебя! 🎉\n'
-        'Адрес: Челябинск, оз. Большой Кременкуль, 1. Банкетный зал «Великан»'
-    )
+    await message.answer(messages.GEO_MESSAGE)
 
 
 @router.message(F.text)
@@ -224,7 +215,7 @@ async def unknown_command(message: types.Message, state: FSMContext):
         return
 
     if state is not None:
-        reply_markup = None
+        reply_markup = types.ReplyKeyboardRemove()
         if state == UserState.REGISTERED:
             reply_markup = make_menu()
 
@@ -234,3 +225,10 @@ async def unknown_command(message: types.Message, state: FSMContext):
         return
 
     await message.answer('Мы не знакомы', reply_markup=start_menu())
+
+
+@router.message(StateFilter(UserState.REGISTERED),
+                F.text == 'Сброс регистрации')
+async def reset(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.answer('Состояние сброшено', reply_markup=start_menu())
