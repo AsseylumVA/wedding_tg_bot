@@ -10,7 +10,6 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 import messages
 import settings
-from settings import QUESTIONS
 
 router = Router()
 
@@ -130,7 +129,7 @@ async def register(message: types.Message, state: FSMContext):
     await state.update_data(user_data)
     await state.set_state(UserState.WAITING_FOR_ANSWERS)
     question_id = 1
-    question = QUESTIONS[question_id]
+    question = messages.QUESTIONS[question_id]
     await message.answer(
         text=f'Привет {user_data['name']}',
         reply_markup=types.ReplyKeyboardRemove()
@@ -152,7 +151,7 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
     question_id = int(question_id)
 
     # Получаем вопрос из словаря
-    question = QUESTIONS.get(question_id)
+    question = messages.QUESTIONS.get(question_id)
     if not question:
         await callback.answer('Ошибка: вопрос не найден.')
         return
@@ -168,8 +167,8 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
 
     # Отправляем следующий вопрос (если есть)
     next_question_id = question_id + 1
-    if next_question_id in QUESTIONS:
-        next_question = QUESTIONS[next_question_id]
+    if next_question_id in messages.QUESTIONS:
+        next_question = messages.QUESTIONS[next_question_id]
         await callback.message.answer(
             text=next_question['text'],
             reply_markup=create_qst_inline_kb(next_question_id, next_question),
@@ -177,7 +176,7 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
     else:
         await state.set_state(UserState.REGISTERED)
         await callback.message.answer(
-            settings.END_POLL_MESSAGE, reply_markup=make_menu()
+            messages.END_POLL_MESSAGE, reply_markup=make_menu()
         )
 
 
