@@ -106,11 +106,9 @@ async def process_answer(
 
 async def save_answers_to_redis(user_data: dict):
     # Сохраняем все ответы в Redis
-    name = user_data['name']
+    user_id = user_data.pop('user_id')
     for key, value in user_data.items():
-        if not key.startswith('qst_'):
-            continue
-        await redis_client.hset(f'user:{name}', key, value)
+        await redis_client.hset(f'user:{user_id}', key, value)
 
 
 @router.message(StateFilter(None), CommandStart())
@@ -148,8 +146,9 @@ async def register(message: types.Message, state: FSMContext):
         )
         return
 
+    user_data['user_id'] = message.from_user.id
     await state.update_data(user_data)
-    if user_data['is_admin']:
+    if user_data['is_admin'] == 'True':
         await state.set_state(UserState.ADMIN)
         await message.answer(
             text=f'Привет {user_data['name']}',
@@ -282,15 +281,20 @@ async def get_users_by_answer(question_id, answer_value):
 
     for key in user_keys:
         answer = await redis_client.hget(key, question_id)
+        name = await redis_client.hget(key, 'name')
         if answer == answer_value:
-            users.append(format_user_key(key))
+            users.append(name)
 
     return users
 
 
 async def get_non_responding_users():
     db_users = {user_info['name'] for user_info in settings.DB.values()}
-    redis_users = {format_user_key(key) for key in await get_all_users()}
+    user_keys = await get_all_users()
+    redis_users = set()
+    for key in user_keys:
+        name = await redis_client.hget(key, 'name')
+        redis_users.add(name)
     return db_users - redis_users
 
 
@@ -312,7 +316,7 @@ async def poll_results(message: types.Message):
 
     for key in user_keys:
         user_data = await get_user_data(key)
-        name = key.replace('user:', '')
+        name = user_data['name']
         formatted_results = format_poll_results(user_data)
         results.append(f'{name}: {formatted_results}')
 
@@ -334,7 +338,7 @@ async def who_come(message: types.Message):
 
 @router.message(F.text == 'Кто не придет?', StateFilter(UserState.ADMIN))
 async def who_fraud(message: types.Message):
-    fraud_users = await get_users_by_answer(1, 'False')
+    fraud_users = await get_users_by_answer('qst_1', 'False')
 
     if fraud_users:
         await message.answer(
