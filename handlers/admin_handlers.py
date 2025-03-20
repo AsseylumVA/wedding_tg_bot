@@ -2,12 +2,13 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 
 from aiogram import F, Router, types
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
 import messages
 import settings
-from keyboards import make_menu, start_menu, admin_menu
+from keyboards import make_menu, start_menu, admin_menu, cancel_keyboard
+from managers.message_sender import MessageSenderManger
 from managers.redis_mgr import RedisManager
 from utils import AdminState, get_answer_text, UserState
 
@@ -85,11 +86,12 @@ async def others(message: types.Message):
         await message.answer('Нет пользователей, не ответивших на опрос.')
 
 
-@router.message(StateFilter(AdminState.ADMIN), Command('set_welcome_photo'))
+@router.message(StateFilter(AdminState.ADMIN),
+                F.text == 'Установить приветственное фото')
 async def set_welcome_photo(message: types.Message, state: FSMContext):
     await state.set_state(AdminState.SET_PHOTO)
     await message.answer('Отправь приветственное фото',
-                         reply_markup=types.ReplyKeyboardRemove())
+                         reply_markup=cancel_keyboard())
 
 
 @router.message(StateFilter(AdminState.SET_PHOTO), F.photo)
@@ -100,10 +102,10 @@ async def process_welcome_photo(message: types.Message, state: FSMContext):
     await message.answer('Новое фото установлено', reply_markup=admin_menu())
 
 
-@router.message(StateFilter(AdminState.ADMIN), Command("stats"))
+@router.message(StateFilter(AdminState.ADMIN), F.text == 'Статистика')
 async def stats(message: types.Message):
     user_keys = await redis_manager.get_all_users()
-    stats = {
+    statistic = {
         qst_id: {answer_key: 0 for answer_key in qst_data["answers"]}
         for qst_id, qst_data in messages.QUESTIONS.items()
     }
@@ -111,19 +113,45 @@ async def stats(message: types.Message):
     for key in user_keys:
         user_data = await redis_manager.get_user_data(key)
         for qst_id, qst_answer in user_data.items():
-            if qst_id not in stats:
+            if qst_id not in statistic:
                 continue
-            stats[qst_id][qst_answer] += 1
+            statistic[qst_id][qst_answer] += 1
 
     result = []
     for qst_id, qst_data in messages.QUESTIONS.items():
         result.append(f"{qst_data['admin_text']}:")
         for answer_key, answer_text in qst_data["answers"].items():
-            count = stats[qst_id].get(answer_key, 0)
+            count = statistic[qst_id].get(answer_key, 0)
             result.append(f"  {answer_text}: {count} чел.")
 
     # Отправляем результат
     await message.answer("\n".join(result))
+
+
+@router.message(StateFilter(AdminState.ADMIN),
+                F.text == 'Оповестить пользователей')
+async def set_state_message_sending(message: types.Message, state: FSMContext):
+    await state.set_state(AdminState.SENDING_MESSAGE)
+    await message.answer('Напиши сообщение для рассылки',
+                         reply_markup=cancel_keyboard())
+
+
+@router.message(
+    StateFilter(AdminState.SENDING_MESSAGE, AdminState.SET_PHOTO),
+    F.text == 'Отмена'
+)
+async def cancel(message: types.Message, state: FSMContext):
+    await state.set_state(AdminState.ADMIN)
+    await message.answer('Действие отменено',
+                         reply_markup=admin_menu())
+
+
+@router.message(StateFilter(AdminState.SENDING_MESSAGE), F.text)
+async def send_messages(message: types.Message, state: FSMContext):
+    sender = MessageSenderManger()
+    await sender.send_messages(message.text)
+    await state.set_state(AdminState.ADMIN)
+    await message.answer('Сообщения отправлены!', reply_markup=admin_menu())
 
 
 @router.message(F.text)

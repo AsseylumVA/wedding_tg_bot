@@ -17,6 +17,7 @@ class UserState(StatesGroup):
 class AdminState(StatesGroup):
     ADMIN = State()
     SET_PHOTO = State()
+    SENDING_MESSAGE = State()
 
 
 async def edit_text(message: types.Message, question_id: str,

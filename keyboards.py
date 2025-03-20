@@ -60,8 +60,16 @@ def admin_menu() -> types.ReplyKeyboardMarkup:
             types.KeyboardButton(text='Остальные'),
         ],
         [
-            types.KeyboardButton(text='/set_welcome_photo'),
-            types.KeyboardButton(text='/stats')
+            types.KeyboardButton(text='Установить приветственное фото'),
+            types.KeyboardButton(text='Статистика'),
+            types.KeyboardButton(text='Оповестить пользователей')
         ]
+    ]
+    return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
+
+
+def cancel_keyboard() -> types.ReplyKeyboardMarkup:
+    kb_list = [
+        [types.KeyboardButton(text='Отмена'), ]
     ]
     return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
