@@ -4,6 +4,8 @@ Wedding tg bot
 # installation
 ```shell
 # Linux and MacOS
+sudo apt install redis
+
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt

@@ -106,7 +106,7 @@ async def process_welcome_photo(message: types.Message, state: FSMContext):
 async def stats(message: types.Message):
     user_keys = await redis_manager.get_all_users()
     statistic = {
-        qst_id: {answer_key: 0 for answer_key in qst_data["answers"]}
+        qst_id: {answer_key: 0 for answer_key in qst_data['answers']}
         for qst_id, qst_data in messages.QUESTIONS.items()
     }
 
@@ -119,13 +119,15 @@ async def stats(message: types.Message):
 
     result = []
     for qst_id, qst_data in messages.QUESTIONS.items():
-        result.append(f"{qst_data['admin_text']}:")
-        for answer_key, answer_text in qst_data["answers"].items():
+        result.append(f'{qst_data['admin_text']}:')
+        for answer_key, answer_text in qst_data['answers'].items():
             count = statistic[qst_id].get(answer_key, 0)
-            result.append(f"  {answer_text}: {count} чел.")
+            result.append(f'  {answer_text}: {count} чел.')
 
+    non_responding_count = len(await redis_manager.get_non_responding_users())
+    result.append(f'<b>Не прошли опрос: {non_responding_count}</b>')
     # Отправляем результат
-    await message.answer("\n".join(result))
+    await message.answer('\n'.join(result))
 
 
 @router.message(StateFilter(AdminState.ADMIN),

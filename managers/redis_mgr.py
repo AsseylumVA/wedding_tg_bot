@@ -14,6 +14,9 @@ class RedisManager:
         for key, value in user_data.items():
             await self.redis_client.hset(f'user:{user_id}', key, value)
 
+    async def del_user_data(self, user_id):
+        await self.redis_client.delete(f'user:{user_id}')
+
     async def get_all_users(self):
         user_keys = await self.redis_client.keys('user:*')
         return user_keys

@@ -122,6 +122,8 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.answer(
             'Очень жаль, что ты не сможешь прийти. 😢'
         )
+        user_data = await state.get_data()
+        await redis_manager.save_answers_to_redis(user_data)
         await state.set_state(UserState.FRAUD)
         return
 
@@ -191,5 +193,6 @@ async def restart_poll(message: types.Message, state: FSMContext):
 
 @router.message(Command('reset'))
 async def reset(message: types.Message, state: FSMContext):
+    await redis_manager.del_user_data(message.from_user.id)
     await state.clear()
     await message.answer('Состояние сброшено', reply_markup=start_menu())
