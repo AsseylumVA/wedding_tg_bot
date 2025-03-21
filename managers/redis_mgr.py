@@ -5,8 +5,10 @@ import settings
 
 class RedisManager:
     def __init__(self):
-        self.redis_client = Redis(host='localhost', port=6379, db=0,
-                                  decode_responses=True)
+        self.redis_client = Redis.from_url(
+            settings.REDIS_USER_DATA_DB,
+            decode_responses=True,
+        )
 
     async def save_answers_to_redis(self, user_data: dict):
         # Сохраняем все ответы в Redis
@@ -37,7 +39,8 @@ class RedisManager:
         return users
 
     async def get_non_responding_users(self):
-        db_users = {user_info['full_name'] for user_info in settings.DB.values() if
+        db_users = {user_info['full_name'] for user_info in
+                    settings.DB.values() if
                     user_info['is_admin'] == 'False'}
         user_keys = await self.get_all_users()
         redis_users = set()

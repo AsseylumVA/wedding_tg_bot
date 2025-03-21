@@ -69,8 +69,6 @@ async def register(message: types.Message, state: FSMContext):
         phone_number = f'+{phone_number}'
 
     user_data = settings.DB.get(phone_number)
-    user_data['user_id'] = message.from_user.id
-    user_data['phone'] = phone_number
     if not user_data:
         data = await state.get_data()
         data['fraud'] = data.setdefault('fraud', 0) + 1
@@ -80,7 +78,8 @@ async def register(message: types.Message, state: FSMContext):
             'обратись к системному администратору.'
         )
         return
-
+    user_data['user_id'] = message.from_user.id
+    user_data['phone'] = phone_number
     await state.update_data(user_data)
 
     if user_data['is_admin'] == 'True':
