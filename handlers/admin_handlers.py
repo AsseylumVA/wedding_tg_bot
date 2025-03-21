@@ -7,11 +7,13 @@ from aiogram.fsm.context import FSMContext
 
 import messages
 import settings
-from keyboards.admin_kb import admin_menu, cancel_keyboard, set_photos
-from keyboards.user_kb import make_menu, start_menu
+from keyboards.admin_kb import (
+    admin_menu, cancel_keyboard, set_photos, stat_menu
+)
+from keyboards.user_kb import start_menu
 from managers.message_sender import MessageSenderManger
 from managers.redis_mgr import RedisManager
-from utils import AdminState, get_answer_text, UserState
+from utils import AdminState, get_answer_text
 
 redis_manager = RedisManager()
 router = Router()
@@ -24,6 +26,27 @@ logging.basicConfig(
     format=log_format,
     handlers=[TimedRotatingFileHandler(settings.LOG_FILE, when='d')],
 )
+
+
+@router.message(
+    StateFilter(AdminState.SET_DRESS_PHOTO, AdminState.SET_WELCOME_PHOTO),
+    F.text == 'Отмена'
+)
+async def menu_cancel(message: types.Message, state: FSMContext):
+    await state.set_state(AdminState.ADMIN)
+    await message.answer('Действие отменено',
+                         reply_markup=admin_menu())
+
+
+@router.message(StateFilter(AdminState), F.text == 'Назад')
+async def menu_back(message: types.Message, state: FSMContext):
+    await state.set_state(AdminState.ADMIN)
+    await message.answer('Выбери действие', reply_markup=admin_menu())
+
+
+@router.message(StateFilter(AdminState), F.text == 'Статистика')
+async def menu_stat(message: types.Message):
+    await message.answer('Выбери действие', reply_markup=stat_menu())
 
 
 def format_poll_results(user_data):
@@ -124,7 +147,7 @@ async def process_photo(message: types.Message, state: FSMContext):
     await message.answer('Новое фото установлено', reply_markup=admin_menu())
 
 
-@router.message(StateFilter(AdminState.ADMIN), F.text == 'Статистика')
+@router.message(StateFilter(AdminState.ADMIN), F.text == 'Отчет')
 async def stats(message: types.Message):
     user_keys = await redis_manager.get_all_users()
     statistic = {
@@ -160,19 +183,6 @@ async def set_state_message_sending(message: types.Message, state: FSMContext):
                          reply_markup=cancel_keyboard())
 
 
-@router.message(
-    StateFilter(
-        AdminState.SET_DRESS_PHOTO,
-        AdminState.SET_WELCOME_PHOTO
-    ),
-    F.text == 'Отмена'
-)
-async def cancel(message: types.Message, state: FSMContext):
-    await state.set_state(AdminState.ADMIN)
-    await message.answer('Действие отменено',
-                         reply_markup=admin_menu())
-
-
 @router.message(StateFilter(AdminState.SENDING_MESSAGE), F.text)
 async def send_messages(message: types.Message, state: FSMContext):
     sender = MessageSenderManger()
@@ -185,18 +195,9 @@ async def send_messages(message: types.Message, state: FSMContext):
 async def unknown_command(message: types.Message, state: FSMContext):
     logging.error(f'unknown user state: {state}')
 
-    if await state.get_state() == UserState.FRAUD:
-        await message.answer('Очень жаль, что ты не сможешь прийти. 😢')
+    user_state = await state.get_state()
+    if user_state is None:
+        await message.answer('Мы не знакомы', reply_markup=start_menu())
         return
 
-    if state is not None:
-        reply_markup = types.ReplyKeyboardRemove()
-        if state == UserState.REGISTERED:
-            reply_markup = make_menu()
-
-        await message.answer(
-            'Доступны только команды из меню', reply_markup=reply_markup
-        )
-        return
-
-    await message.answer('Мы не знакомы', reply_markup=start_menu())
+    await message.answer('Доступны только команды из меню')

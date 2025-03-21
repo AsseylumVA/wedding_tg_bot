@@ -34,6 +34,13 @@ def make_menu() -> types.ReplyKeyboardMarkup:
     return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
 
 
+def restart_poll_fraud() -> types.ReplyKeyboardMarkup:
+    kb_list = [
+        [types.KeyboardButton(text='💬Пройти опрос заново')],
+    ]
+    return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
+
+
 def create_qst_inline_kb(
         question_id: str, question: dict
 ) -> types.InlineKeyboardMarkup:

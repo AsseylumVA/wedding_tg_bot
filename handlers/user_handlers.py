@@ -13,6 +13,7 @@ from keyboards.user_kb import (
     create_qst_inline_kb,
     make_menu,
     new_user_menu,
+    restart_poll_fraud,
     start_menu,
 )
 from managers.redis_mgr import RedisManager
@@ -120,7 +121,8 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
 
     if question_id == 'qst_1' and answer_value == 'False':
         await callback.message.answer(
-            'Очень жаль, что ты не сможешь прийти. 😢'
+            'Очень жаль, что ты не сможешь прийти. 😢',
+            reply_markup=restart_poll_fraud()
         )
         user_data = await state.get_data()
         await redis_manager.save_answers_to_redis(user_data)
@@ -173,7 +175,7 @@ async def geo(message: types.Message):
     await message.answer(messages.GEO_MESSAGE)
 
 
-@router.message(StateFilter(UserState.REGISTERED),
+@router.message(StateFilter(UserState.REGISTERED, UserState.FRAUD),
                 F.text.contains('Пройти опрос заново'))
 async def restart_poll(message: types.Message, state: FSMContext):
     await  state.set_state(UserState.WAITING_FOR_ANSWERS)
