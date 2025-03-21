@@ -30,19 +30,19 @@ class RedisManager:
 
         for key in user_keys:
             answer = await self.redis_client.hget(key, question_id)
-            name = await self.redis_client.hget(key, 'name')
+            name = await self.redis_client.hget(key, 'full_name')
             if answer == answer_value:
                 users.append(name)
 
         return users
 
     async def get_non_responding_users(self):
-        db_users = {user_info['name'] for user_info in settings.DB.values() if
+        db_users = {user_info['full_name'] for user_info in settings.DB.values() if
                     user_info['is_admin'] == 'False'}
         user_keys = await self.get_all_users()
         redis_users = set()
         for key in user_keys:
-            name = await self.redis_client.hget(key, 'name')
+            name = await self.redis_client.hget(key, 'full_name')
             redis_users.add(name)
         return db_users - redis_users
 

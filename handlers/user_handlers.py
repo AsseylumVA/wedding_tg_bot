@@ -37,6 +37,13 @@ logging.basicConfig(
 )
 
 
+async def reset_user_data_to_default(state: FSMContext):
+    data = await state.get_data()
+    default_keys = {'user_id', 'name', 'phone', 'is_admin', 'full_name'}
+    data = {key: value for key, value in data.items() if key in default_keys}
+    await state.set_data(data)
+
+
 @router.message(StateFilter(None), CommandStart())
 async def start_new_user(message: types.Message):
     """
@@ -62,6 +69,8 @@ async def register(message: types.Message, state: FSMContext):
         phone_number = f'+{phone_number}'
 
     user_data = settings.DB.get(phone_number)
+    user_data['user_id'] = message.from_user.id
+    user_data['phone'] = phone_number
     if not user_data:
         data = await state.get_data()
         data['fraud'] = data.setdefault('fraud', 0) + 1
@@ -72,8 +81,8 @@ async def register(message: types.Message, state: FSMContext):
         )
         return
 
-    user_data['user_id'] = message.from_user.id
     await state.update_data(user_data)
+
     if user_data['is_admin'] == 'True':
         await state.set_state(AdminState.ADMIN)
         await message.answer(
@@ -178,7 +187,10 @@ async def geo(message: types.Message):
 @router.message(StateFilter(UserState.REGISTERED, UserState.FRAUD),
                 F.text.contains('Пройти опрос заново'))
 async def restart_poll(message: types.Message, state: FSMContext):
-    await  state.set_state(UserState.WAITING_FOR_ANSWERS)
+    await redis_manager.del_user_data(message.from_user.id)
+    await reset_user_data_to_default(state)
+
+    await state.set_state(UserState.WAITING_FOR_ANSWERS)
 
     question_id = 'qst_1'
     question = messages.QUESTIONS[question_id]
