@@ -8,8 +8,8 @@ from aiogram.fsm.context import FSMContext
 
 import messages
 import settings
-from keyboards import (
-    admin_menu,
+from keyboards.admin_kb import admin_menu
+from keyboards.user_kb import (
     create_qst_inline_kb,
     make_menu,
     new_user_menu,
@@ -82,7 +82,7 @@ async def register(message: types.Message, state: FSMContext):
         return
 
     await message.answer_photo(
-        await redis_manager.get_settings('welcome_photo_id'),
+        await redis_manager.get_settings('welcome_photo'),
         caption=f'👋Здравствуй {user_data['name']}'
     )
 
@@ -147,6 +147,9 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
 
 @router.message(StateFilter(UserState.REGISTERED), F.text.contains('НАЖМИ'))
 async def info(message: types.Message):
+    await message.answer_photo(
+        await redis_manager.get_settings('dress_photo'),
+    )
     await message.answer(messages.FLOWERS_INFO_MESSAGE)
 
 

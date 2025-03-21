@@ -7,7 +7,8 @@ from aiogram.fsm.context import FSMContext
 
 import messages
 import settings
-from keyboards import make_menu, start_menu, admin_menu, cancel_keyboard
+from keyboards.admin_kb import admin_menu, cancel_keyboard, set_photos
+from keyboards.user_kb import make_menu, start_menu
 from managers.message_sender import MessageSenderManger
 from managers.redis_mgr import RedisManager
 from utils import AdminState, get_answer_text, UserState
@@ -86,18 +87,39 @@ async def others(message: types.Message):
         await message.answer('Нет пользователей, не ответивших на опрос.')
 
 
+@router.message(StateFilter(AdminState.ADMIN), F.text == 'Настройка картинок')
+async def photo_settings(message: types.Message):
+    await message.answer('Выбери действие', reply_markup=set_photos())
+
+
 @router.message(StateFilter(AdminState.ADMIN),
-                F.text == 'Установить приветственное фото')
+                F.text == 'Приветственное фото')
 async def set_welcome_photo(message: types.Message, state: FSMContext):
-    await state.set_state(AdminState.SET_PHOTO)
-    await message.answer('Отправь приветственное фото',
+    await state.set_state(AdminState.SET_WELCOME_PHOTO)
+    await message.answer('Отправь фото',
                          reply_markup=cancel_keyboard())
 
 
-@router.message(StateFilter(AdminState.SET_PHOTO), F.photo)
-async def process_welcome_photo(message: types.Message, state: FSMContext):
+@router.message(StateFilter(AdminState.ADMIN),
+                F.text == 'Фото дресс кода')
+async def set_dress_photo(message: types.Message, state: FSMContext):
+    await state.set_state(AdminState.SET_DRESS_PHOTO)
+    await message.answer('Отправь фото',
+                         reply_markup=cancel_keyboard())
+
+
+@router.message(
+    StateFilter(AdminState.SET_WELCOME_PHOTO, AdminState.SET_DRESS_PHOTO),
+    F.photo
+)
+async def process_photo(message: types.Message, state: FSMContext):
     file_id = message.photo[-1].file_id
-    await redis_manager.set_settings('welcome_photo_id', file_id)
+
+    photo_id = 'welcome_photo'
+    if await state.get_state() == AdminState.SET_DRESS_PHOTO:
+        photo_id = 'dress_photo'
+
+    await redis_manager.set_settings(photo_id, file_id)
     await state.set_state(AdminState.ADMIN)
     await message.answer('Новое фото установлено', reply_markup=admin_menu())
 
@@ -139,7 +161,10 @@ async def set_state_message_sending(message: types.Message, state: FSMContext):
 
 
 @router.message(
-    StateFilter(AdminState.SENDING_MESSAGE, AdminState.SET_PHOTO),
+    StateFilter(
+        AdminState.SET_DRESS_PHOTO,
+        AdminState.SET_WELCOME_PHOTO
+    ),
     F.text == 'Отмена'
 )
 async def cancel(message: types.Message, state: FSMContext):
@@ -160,7 +185,7 @@ async def send_messages(message: types.Message, state: FSMContext):
 async def unknown_command(message: types.Message, state: FSMContext):
     logging.error(f'unknown user state: {state}')
 
-    if state == UserState.FRAUD:
+    if await state.get_state() == UserState.FRAUD:
         await message.answer('Очень жаль, что ты не сможешь прийти. 😢')
         return
 

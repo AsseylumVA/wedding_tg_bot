@@ -37,7 +37,8 @@ class RedisManager:
         return users
 
     async def get_non_responding_users(self):
-        db_users = {user_info['name'] for user_info in settings.DB.values()}
+        db_users = {user_info['name'] for user_info in settings.DB.values() if
+                    user_info['is_admin'] == 'False'}
         user_keys = await self.get_all_users()
         redis_users = set()
         for key in user_keys:

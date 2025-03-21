@@ -49,27 +49,3 @@ def create_qst_inline_kb(
     # set keyboard  size
     builder.adjust(question['adjust'])
     return builder.as_markup()
-
-
-def admin_menu() -> types.ReplyKeyboardMarkup:
-    kb_list = [
-        [
-            types.KeyboardButton(text='Результаты опроса'),
-            types.KeyboardButton(text='Кто придет?'),
-            types.KeyboardButton(text='Кто не придет?'),
-            types.KeyboardButton(text='Остальные'),
-        ],
-        [
-            types.KeyboardButton(text='Установить приветственное фото'),
-            types.KeyboardButton(text='Статистика'),
-            types.KeyboardButton(text='Оповестить пользователей')
-        ]
-    ]
-    return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)
-
-
-def cancel_keyboard() -> types.ReplyKeyboardMarkup:
-    kb_list = [
-        [types.KeyboardButton(text='Отмена'), ]
-    ]
-    return types.ReplyKeyboardMarkup(keyboard=kb_list, resize_keyboard=True)

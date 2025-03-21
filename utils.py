@@ -16,7 +16,8 @@ class UserState(StatesGroup):
 
 class AdminState(StatesGroup):
     ADMIN = State()
-    SET_PHOTO = State()
+    SET_DRESS_PHOTO = State()
+    SET_WELCOME_PHOTO = State()
     SENDING_MESSAGE = State()
 
 
