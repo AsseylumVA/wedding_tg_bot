@@ -7,8 +7,6 @@ from aiogram.fsm.storage.redis import RedisStorage
 
 import settings
 
-admins = [int(admin_id) for admin_id in settings.ADMINS]
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
