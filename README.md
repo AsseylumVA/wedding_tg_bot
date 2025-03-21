@@ -31,7 +31,17 @@ docker compose up --build
 #linux
 sudo apt update
 sudo apt install redis-server
+```
 
+Configure `REDIS_DB` and `REDIS_USER_DATA_DB` in settings.py.\
+Example:
+
+```python
+REDIS_DB = 'redis://localhost:6379/1'
+REDIS_USER_DATA_DB = 'redis://localhost:6379/0'
+```
+
+```shell
 cd wedding_tg_bot/
 python3 -m venv env
 . env/bin/activate
