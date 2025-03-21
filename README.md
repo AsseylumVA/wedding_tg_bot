@@ -1,28 +1,42 @@
 # wedding_tg_bot
+
 Wedding tg bot
 
 # installation
+
 ```shell
-# Linux and MacOS
-sudo apt install redis
-
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Windows
-c:\Python38\python -m venv c:\path\to\myenv
-.\env\Scripts\activate
-pip install -r requirements.txt
+git clone git@github.com:AsseylumVA/wedding_tg_bot.git
 ```
 
 # settings
-```
+
+```shell
 cp settings.dev.py settings.py
 ```
-Now settings are located in the file `settings.py`
 
-# run
+Now settings are located in the file `settings.py`
+You need to configure `API Token` and `DB` Constants
+
+# run on Docker
+
+You need to install Docker before start.
+
 ```shell
-python aiogram_run.py
+docker compose up --build
+```
+
+# run locally
+
+```shell
+#linux
+sudo apt update
+sudo apt install redis-server
+
+cd wedding_tg_bot/
+python3 -m venv env
+. env/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+
+python3 aiogram_run.py
 ```

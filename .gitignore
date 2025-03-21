@@ -140,6 +140,7 @@ venv.bak/
 .spyderproject
 .spyproject
 
+
 # Rope project settings
 .ropeproject
 
@@ -176,3 +177,4 @@ ruff.toml
 
 settings.py
 qodana.yaml
+redisdata
