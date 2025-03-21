@@ -1,7 +1,6 @@
 # Токен для подключени бота к Telegram
 API_TOKEN = 'CHANGEME'
 LOG_FILE = 'wedding_bot.log'
-ADMINS = {}
 
 """
 база данных номеров
@@ -9,7 +8,8 @@ ADMINS = {}
 db = {
     '+79999999999': {
         'name': 'Петр',
-        'is_admin': False,
+        'is_admin': 'False',
+        'full_name': 'Петров Петр',
     }
 }
 """
