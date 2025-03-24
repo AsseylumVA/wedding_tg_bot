@@ -56,7 +56,7 @@ class RedisManager:
         return await self.redis_client.hget('settings', key)
 
     async def set_def_settings(self):
-        if not self.get_settings('welcome_photo'):
+        if not await self.get_settings('welcome_photo'):
             await self.set_settings('welcome_photo', settings.DEFAULT_FILE_ID)
-        if not self.get_settings('welcome_photo'):
+        if not await self.get_settings('dress_photo'):
             await self.set_settings('dress_photo', settings.DEFAULT_FILE_ID)
