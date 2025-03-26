@@ -1,17 +1,17 @@
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-from aiogram import F, Router, types
+from aiogram import F, Router, types, Bot
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
 import messages
 import settings
 from keyboards.admin_kb import (
-    admin_menu, cancel_keyboard, set_photos, stat_menu
+    admin_menu, cancel_keyboard, set_photos, stat_menu,
 )
 from keyboards.user_kb import start_menu
-from managers.message_sender import MessageSenderManger
+from managers.message_sender import MessageSenderManager
 from managers.redis_mgr import RedisManager
 from utils import AdminState, get_answer_text
 
@@ -184,8 +184,8 @@ async def set_state_message_sending(message: types.Message, state: FSMContext):
 
 
 @router.message(StateFilter(AdminState.SENDING_MESSAGE), F.text)
-async def send_messages(message: types.Message, state: FSMContext):
-    sender = MessageSenderManger()
+async def send_messages(message: types.Message, state: FSMContext, bot: Bot):
+    sender = MessageSenderManager(bot=bot)
     await sender.send_messages(message.text)
     await state.set_state(AdminState.ADMIN)
     await message.answer('Сообщения отправлены!', reply_markup=admin_menu())

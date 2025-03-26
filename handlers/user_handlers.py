@@ -1,15 +1,18 @@
 import asyncio
 import logging
+from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
 from aiogram import F, Router, types
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
+from aiogram.types import ReplyKeyboardRemove
 
 import messages
 import settings
 from keyboards.admin_kb import admin_menu
 from keyboards.user_kb import (
+    after_start_menu,
     create_qst_inline_kb,
     make_menu,
     new_user_menu,
@@ -27,14 +30,16 @@ from utils import (
 redis_manager = RedisManager()
 router = Router()
 
-log_format = '[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s'
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format=log_format,
+    format=settings.LOG_FORMAT,
     handlers=[TimedRotatingFileHandler(settings.LOG_FILE, when='d')],
 )
+
+
+def get_current_time():
+    return datetime.now(settings.TZ)
 
 
 async def reset_user_data_to_default(state: FSMContext):
@@ -92,8 +97,16 @@ async def register(message: types.Message, state: FSMContext):
 
     await message.answer_photo(
         await redis_manager.get_settings('welcome_photo'),
-        caption=f'👋Здравствуй {user_data['name']}'
+        caption=f'👋Здравствуй {user_data['name']}',
+        reply_markup=ReplyKeyboardRemove()
     )
+
+    now = get_current_time()
+    if settings.START_TIME <= now:
+        await state.set_state(UserState.REGISTERED)
+        await message.answer('🎉Добро пожаловать на нашу свадьбу!',
+                             reply_markup=after_start_menu())
+        return
 
     await state.set_state(UserState.WAITING_FOR_ANSWERS)
     question_id = 'qst_1'
