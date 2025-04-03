@@ -175,6 +175,6 @@ ruff.toml
 # PyPI configuration file
 .pypirc
 
-settings.py
 qodana.yaml
-redisdata
+redis_data/
+DB.json

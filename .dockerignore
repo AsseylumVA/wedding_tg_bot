@@ -4,4 +4,4 @@ env
 .idea
 .vscode
 .env
-redisdata/
+redis_data/

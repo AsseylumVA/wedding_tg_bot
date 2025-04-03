@@ -1,21 +1,17 @@
+import json
+import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from aiogram.types import ReplyKeyboardRemove
-
 from keyboards.user_kb import after_start_menu
 
 TZ = ZoneInfo('Asia/Yekaterinburg')
 LOG_FORMAT = '[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s'
 
 # Токен для подключения бота к Telegram
-API_TOKEN = ''
-LOG_FILE = 'wedding_bot.log'
-DEFAULT_FILE_ID = 'AgACAgIAAxkBAAIItWfhA1RGz-4QDSIDlSt_XfRJKVJjAAKB6DEbUFsJS8ZNTpbh9mGIAQADAgADeAADNgQ'
-
-PHOTO_CHANNEL_URL = 'https://t.me/your_chat_username'
-
-START_TIME = datetime(2025, 3, 26, 18, 7, tzinfo=TZ)
+API_TOKEN = os.getenv('API_TOKEN')
+PHOTO_CHANNEL_URL = os.getenv('PHOTO_CHANNEL_URL')
 
 """
 база данных номеров
@@ -27,7 +23,16 @@ db = {
     }
 }
 """
-DB = {}
+with open('DB.json', 'r', encoding='utf-8') as f:
+    DB = json.load(f)
+
+LOG_FILE = 'var/log/wedding_bot.log'
+
+DEFAULT_FILE_ID = 'AgACAgIAAxkBAAIItWfhA1RGz-4QDSIDlSt_XfRJKVJjAAKB6DEbUFsJS8ZNTpbh9mGIAQADAgADeAADNgQ'
+
+REDIS_DB = 'redis://redis_container:6379/1'
+REDIS_USER_DATA_DB = 'redis://redis_container:6379/0'
+START_TIME = datetime(2025, 3, 26, 18, 7, tzinfo=TZ)
 
 """
 Отложенные сообщения
@@ -53,6 +58,3 @@ SCHEDULED_MESSAGES = {
         'reply_markup': after_start_menu(),
     }
 }
-
-REDIS_DB = 'redis://redis:6379/1'
-REDIS_USER_DATA_DB = 'redis://redis:6379/0'
