@@ -5,7 +5,7 @@ services:
     ports:
       - "6380:6379"
     volumes:
-      - ./redis_data:/data
+      - redis_data:/data
     deploy:
       resources:
         limits:
@@ -24,10 +24,10 @@ services:
         redis-server /usr/local/etc/redis/redis.conf --aclfile /usr/local/etc/redis/users.acl
       '
     healthcheck:
-      test: [ "CMD", "redis-cli ping | grep PONG" ]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
     restart: unless-stopped
     tty: true
     stdin_open: true
@@ -36,6 +36,9 @@ services:
     image: asseylumva/wedding_tg_bot:latest
     container_name: bot
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    env_file: .env
+
 volumes:
   redis_data:

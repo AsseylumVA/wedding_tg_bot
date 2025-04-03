@@ -32,7 +32,7 @@ DEFAULT_FILE_ID = 'AgACAgIAAxkBAAIItWfhA1RGz-4QDSIDlSt_XfRJKVJjAAKB6DEbUFsJS8ZNT
 
 REDIS_DB = 'redis://redis_container:6379/1'
 REDIS_USER_DATA_DB = 'redis://redis_container:6379/0'
-START_TIME = datetime(2025, 3, 26, 18, 7, tzinfo=TZ)
+START_TIME = datetime(2025, 6, 14, 12, 0, tzinfo=TZ)
 
 """
 Отложенные сообщения
