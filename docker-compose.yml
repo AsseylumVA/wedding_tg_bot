@@ -5,7 +5,7 @@ services:
     ports:
       - "6380:6379"
     volumes:
-      - ./redisdata:/data
+      - ./redis_data:/data
     deploy:
       resources:
         limits:
@@ -33,9 +33,9 @@ services:
     stdin_open: true
 
   bot:
-    #    image: asseylumva/wedding_tg_bot:latest
-    build: .
+    image: asseylumva/wedding_tg_bot:latest
     container_name: bot
     depends_on:
       - redis
-    #        condition: service_healthy
+volumes:
+  redis_data:
