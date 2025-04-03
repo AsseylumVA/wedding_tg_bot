@@ -25,9 +25,9 @@ services:
       '
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 30s
+      interval: 5s
       timeout: 10s
-      retries: 3
+      retries: 5
     restart: unless-stopped
     tty: true
     stdin_open: true
