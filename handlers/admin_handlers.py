@@ -69,7 +69,7 @@ async def poll_results(message: types.Message):
         user_data = await redis_manager.get_user_data(key)
         name = user_data['full_name']
         formatted_results = format_poll_results(user_data)
-        results.append(f'🟢<b>{name}</b>: {formatted_results}')
+        results.append(f'🟢 <b>{name}</b>: {formatted_results}')
 
     if results:
         await message.answer('Результаты опроса:\n' + '\n'.join(results))
