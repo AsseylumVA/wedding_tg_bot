@@ -5,3 +5,4 @@ env
 .vscode
 .env
 redis_data/
+settings.py
