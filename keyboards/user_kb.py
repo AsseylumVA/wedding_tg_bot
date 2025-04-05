@@ -13,7 +13,7 @@ def new_user_menu() -> types.ReplyKeyboardMarkup:
     kb_list = [
         [
             types.KeyboardButton(
-                text='Отправить свой номер',
+                text='Давай познакомимся!',
                 request_contact=True,
                 callback_data='contact',
             )

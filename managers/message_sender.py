@@ -16,6 +16,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+async def get_current_time():
+    return datetime.now(settings.TZ)
+
+
 class MessageSenderManager:
     def __init__(self, bot):
         self.redis_manager = RedisManager()
@@ -32,6 +36,16 @@ class MessageSenderManager:
             except Exception as e:
                 logger.error(f"Ошибка отправки для {user_id}: {e}")
 
+    async def send_welcome_messages(self, user_id):
+        now = await get_current_time()
+        for msg_name, msg_data in settings.SCHEDULED_MESSAGES.items():
+            if msg_data['send_time'] <= now:
+                await self.bot.send_message(
+                    chat_id=user_id,
+                    text=msg_data['text'],
+                    reply_markup=msg_data['reply_markup']
+                )
+
 
 class MessageScheduler:
     def __init__(self, bot: Bot, redis_manager: RedisManager):
@@ -40,21 +54,18 @@ class MessageScheduler:
         self.sender = MessageSenderManager(bot)
         self.tasks = []
 
-    @staticmethod
-    def get_current_time():
-        return datetime.now(settings.TZ)
-
     async def check_and_send(self):
         """Проверяет и отправляет запланированные сообщения"""
         logger.info('Рассылка начата')
+        messages_to_send = settings.SCHEDULED_MESSAGES.copy()
         while True:
-            now = self.get_current_time()
-            for msg_name, msg_data in list(settings.SCHEDULED_MESSAGES.items()):
+            now = await get_current_time()
+            for msg_name, msg_data in messages_to_send.items():
                 if msg_data['send_time'] <= now:
                     await self.sender.send_messages(msg_data['text'],
                                                     msg_data['reply_markup'])
                     logger.info(f'Сообщение отправлено: {msg_name}')
-                    settings.SCHEDULED_MESSAGES.pop(msg_name)
+                    messages_to_send.pop(msg_name)
             await asyncio.sleep(60)
 
     async def run(self):

@@ -41,6 +41,7 @@ services:
     env_file: .env
     volumes:
       - ./DB.json:/app/DB.json
+      - ./settings.py:/app/settings.py
 
 volumes:
   redis_data:

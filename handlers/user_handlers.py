@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
-from aiogram import F, Router, types
+from aiogram import F, Router, types, Bot
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
@@ -12,13 +12,13 @@ import messages
 import settings
 from keyboards.admin_kb import admin_menu
 from keyboards.user_kb import (
-    after_start_menu,
     create_qst_inline_kb,
     make_menu,
     new_user_menu,
     restart_poll_fraud,
     start_menu,
 )
+from managers.message_sender import MessageSenderManager
 from managers.redis_mgr import RedisManager
 from utils import (
     AdminState,
@@ -62,7 +62,7 @@ async def start_new_user(message: types.Message):
 
 
 @router.message(F.contact)
-async def register(message: types.Message, state: FSMContext):
+async def register(message: types.Message, state: FSMContext, bot: Bot):
     await state.clear()
 
     if message.contact.user_id != message.from_user.id:
@@ -95,18 +95,18 @@ async def register(message: types.Message, state: FSMContext):
         )
         return
 
+    now = get_current_time()
+    if settings.START_TIME <= now:
+        await state.set_state(UserState.REGISTERED)
+        sender = MessageSenderManager(bot=bot)
+        await sender.send_welcome_messages(message.from_user.id)
+        return
+
     await message.answer_photo(
         await redis_manager.get_settings('welcome_photo'),
         caption=f'👋Здравствуй {user_data['name']}',
         reply_markup=ReplyKeyboardRemove()
     )
-
-    now = get_current_time()
-    if settings.START_TIME <= now:
-        await state.set_state(UserState.REGISTERED)
-        await message.answer('🎉Добро пожаловать на нашу свадьбу!',
-                             reply_markup=after_start_menu())
-        return
 
     await state.set_state(UserState.WAITING_FOR_ANSWERS)
     question_id = 'qst_1'

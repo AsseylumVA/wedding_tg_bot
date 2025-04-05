@@ -4,6 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from aiogram.types import ReplyKeyboardRemove
+
 from keyboards.user_kb import after_start_menu
 
 TZ = ZoneInfo('Asia/Yekaterinburg')
@@ -51,7 +52,7 @@ SCHEDULED_MESSAGES = {
         'reply_markup': ReplyKeyboardRemove(),
     },
     'info': {
-        'text': 'Теперь в этот чат вы можете скидывать фотки с нашего мероприятия!\n'
+        'text': 'В этот чат вы можете скидывать фотки с нашего мероприятия!\n'
                 'Фотографии отмеченные хештегом #баттл будут приняты к участию в конкурсе!\n'
                 f'Все фотографии, которые вы скинете боту, будут опубликованы <a href="{PHOTO_CHANNEL_URL}">тут!</a>',
         'send_time': START_TIME,
