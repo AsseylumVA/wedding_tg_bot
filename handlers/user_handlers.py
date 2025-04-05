@@ -97,6 +97,7 @@ async def register(message: types.Message, state: FSMContext, bot: Bot):
 
     now = get_current_time()
     if settings.START_TIME <= now:
+        await redis_manager.save_user_data_to_redis(user_data)
         await state.set_state(UserState.REGISTERED)
         sender = MessageSenderManager(bot=bot)
         await sender.send_welcome_messages(message.from_user.id)
@@ -146,7 +147,7 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
             reply_markup=restart_poll_fraud()
         )
         user_data = await state.get_data()
-        await redis_manager.save_answers_to_redis(user_data)
+        await redis_manager.save_user_data_to_redis(user_data)
         await state.set_state(UserState.FRAUD)
         return
 
@@ -160,7 +161,7 @@ async def handle_q_answers(callback: types.CallbackQuery, state: FSMContext):
         )
     else:
         user_data = await state.get_data()
-        await redis_manager.save_answers_to_redis(user_data)
+        await redis_manager.save_user_data_to_redis(user_data)
 
         await state.set_state(UserState.REGISTERED)
         await callback.message.answer(

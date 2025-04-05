@@ -10,7 +10,7 @@ class RedisManager:
             decode_responses=True,
         )
 
-    async def save_answers_to_redis(self, user_data: dict):
+    async def save_user_data_to_redis(self, user_data: dict):
         # Сохраняем все ответы в Redis
         user_id = user_data.pop('user_id')
         for key, value in user_data.items():
