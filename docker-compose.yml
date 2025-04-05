@@ -39,6 +39,8 @@ services:
       redis:
         condition: service_healthy
     env_file: .env
+    volumes:
+      - ./DB.json:/app/DB.json
 
 volumes:
   redis_data:
