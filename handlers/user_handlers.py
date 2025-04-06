@@ -55,7 +55,7 @@ async def start_new_user(message: types.Message):
     This handler will be called when user sends `/start` or `/help` command
     """
     await message.answer(
-        'Мы еще не знакомы. Пожалуйста, представься',
+        'Мы еще не знакомы. Нажми кнопку "Давай познакомимся!"',
         reply_markup=new_user_menu(),
     )
     return

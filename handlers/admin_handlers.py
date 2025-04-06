@@ -10,7 +10,6 @@ import settings
 from keyboards.admin_kb import (
     admin_menu, cancel_keyboard, set_photos, stat_menu,
 )
-from keyboards.user_kb import start_menu
 from managers.message_sender import MessageSenderManager
 from managers.redis_mgr import RedisManager
 from utils import AdminState, get_answer_text
@@ -194,10 +193,4 @@ async def send_messages(message: types.Message, state: FSMContext, bot: Bot):
 @router.message(F.text)
 async def unknown_command(message: types.Message, state: FSMContext):
     logging.error(f'unknown user state: {state}')
-
-    user_state = await state.get_state()
-    if user_state is None:
-        await message.answer('Мы не знакомы', reply_markup=start_menu())
-        return
-
     await message.answer('Доступны только команды из меню')
