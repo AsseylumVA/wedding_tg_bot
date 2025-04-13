@@ -58,3 +58,10 @@ SCHEDULED_MESSAGES = {
         'reply_markup': after_start_menu(),
     }
 }
+
+CHAT_ID = os.getenv('CHAT_ID')
+IMAGETOPIC_ID = os.getenv('IMAGETOPIC_ID')
+BATTLETOPIC_ID = os.getenv('BATTLETOPIC_ID')
+HASHTAG1 = '#баттл'
+IMG_PATH = (os.path.dirname(__file__) + r'\\Images\\')
+BTL_PATH = (os.path.dirname(__file__) + r'\\Battle\\')

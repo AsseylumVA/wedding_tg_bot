@@ -12,6 +12,7 @@ class UserState(StatesGroup):
     REGISTERED = State()
     FRAUD = State()
     WAITING_FOR_ANSWERS = State()
+    RECIVING_IMAGES = State()
 
 
 class AdminState(StatesGroup):

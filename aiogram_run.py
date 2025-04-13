@@ -4,7 +4,7 @@ from create_bot import bot, dp
 from handlers import admin_handlers, user_handlers
 from managers.message_sender import MessageScheduler
 from managers.redis_mgr import RedisManager
-from middlewares import IgnoreGroupsMiddleware
+from middlewares import IgnoreGroupsMiddleware, AlbumMiddleware
 
 
 async def main():
@@ -19,6 +19,7 @@ async def main():
     dp["bot"] = bot
     dp.include_routers(user_handlers.router, admin_handlers.router)
     dp.update.outer_middleware(IgnoreGroupsMiddleware())
+    dp.update.middleware(AlbumMiddleware)
     await dp.start_polling(bot)
 
 

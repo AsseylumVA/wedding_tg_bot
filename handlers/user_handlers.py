@@ -7,6 +7,7 @@ from aiogram import F, Router, types, Bot
 from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
+from aiogram.types.input_media_document import InputMediaDocument
 
 import messages
 import settings
@@ -220,9 +221,56 @@ async def restart_poll(message: types.Message, state: FSMContext):
         reply_markup=create_qst_inline_kb(question_id, question),
     )
 
+@router.message(F.text.contains(settings.HASHTAG1), StateFilter(UserState.REGISTERED)) 
+async def BulkBattleSend(message: types.Message, state: FSMContext):
+    await state.set_state(UserState.RECIVING_IMAGES)
+    await message.reply('Следущая группа файлов (2+ сжатые фотографии) будет сохранена и переслана в чат с хэштэгом #баттл.')
+
+@router.message(F.media_group_id, StateFilter(UserState.RecivingImages))
+async def BulkBattleAccept(message: types.Message, state: FSMContext, album: list = None):
+    g = 0
+    media_group = []
+    if album:
+        for i in range(int(len(album) // 2)): #название и айди файла идут парами, тоесть на каждое фото идет 2 элемента списка
+            await message.bot.download(file=album[g], destination=(settings.BTL_PATH + (str(message.from_user.id) + '_' + album[g+1])))
+            media_group.append(InputMediaDocument(media=album[g]))
+            g = g + 2
+        await message.bot.send_message(message_thread_id=settings.BATTLETOPIC_ID, chat_id=settings.CHAT_ID, text=f'Альбом из {len(album) // 2} фотографий от @{message.from_user.username}')
+        await message.bot.send_media_group(chat_id=settings.CHAT_ID, message_thread_id=settings.BATTLETOPIC_ID, media=media_group)
+        await message.reply(f'Принято и переслано {len(album) // 2} фотографий. ')
+        await state.set_state(UserState.REGISTERED)
+    else:
+        await message.reply('Ошибка')
+        await state.set_state(UserState.REGISTERED)
+
+@router.message(F.media_group_id, StateFilter(UserState.REGISTERED))
+async def GroupMediaGet(message: types.Message, album: list = None): #обработка альбомов через Middleware "AlbumWare"
+    g = 0
+    if album:
+        for i in range(int(len(album) // 2)): #название и айди файла идут парами, тоесть на каждое фото идет 2 элемента списка
+            await message.bot.download(file=album[g], destination=(settings.IMG_PATH + album[g+1]))
+            g = g + 2
+        await message.reply(f'Принято {len(album) // 2} фотографий.')
+    else:
+        await message.reply('Ошибка')
+
+@router.message(F.document, StateFilter(UserState.REGISTERED))
+async def get_photo(message: types.Message):
+    #проверка есть ли подпись к файлу
+    msgcaption = message.caption
+    if msgcaption is None: msgcaption = ['Нет подписи']
+    else: msgcaption = msgcaption.split(' ')
+    if any(f'{settings.HASHTAG1}' in i for i in msgcaption) == True: #переслать файл если есть тэг баттл(hashtag1) в подписе
+        await message.bot.download(file=message.document.file_id, destination=(settings.BTL_PATH + (str(message.from_user.id) +  '_' + message.document.file_name)))
+        await message.bot.send_document(message_thread_id=settings.BATTLETOPIC_ID, chat_id=settings.CHAT_ID, document=message.document.file_id, caption=f'Фотография от @{message.from_user.username}')
+        await message.reply(f'Фотография с тэгом {settings.HASHTAG1} была сохранена и переслана в отдельный чат.')
+    else:
+        await message.bot.download(file=message.document.file_id, destination=(settings.IMG_PATH + (str(message.from_user.id) + '_' + message.document.file_name)))
+        await message.reply('Принята 1 фотография.')
 
 @router.message(Command('reset'))
 async def reset(message: types.Message, state: FSMContext):
     await redis_manager.del_user_data(message.from_user.id)
     await state.clear()
     await message.answer('Состояние сброшено', reply_markup=start_menu())
+
